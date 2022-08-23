@@ -1,0 +1,7 @@
+- Terminar los benchmarks
+- Agregar el estimador de densidad condicional a la clase RandomSets
+- Función de métrica más o menos así
+	distance(self, X):
+		return d_vec(X,self.array)
+  i.e. la distancia de un punto a los demás
+- Revisar métodos pendientes
