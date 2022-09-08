@@ -1,7 +1,8 @@
+from turtle import distance
 import numpy as np
 import matplotlib.pyplot as plt
 class RandomSets(object):
-    def __init__(self,array):
+    def __init__(self,array, matrix=[1,1]):
         """
         Constructor method
         
@@ -14,8 +15,8 @@ class RandomSets(object):
         private vert and horz :: np.arrays reshaped
         private d_vec vectorized metric function
         """
-        self.array=array
-        self.bandwidth_matrix=[1,1]
+        self.array=self._sort(array)
+        self.bandwidth_matrix=matrix
         self.__vert=np.array(self.array).reshape(len(self.array),1)
         self.__horz=np.array(self.array).reshape(1,len(self.array))
         self._d_vec = np.vectorize(self._d)
@@ -40,8 +41,19 @@ class RandomSets(object):
     @bandwidth_matrix.setter
     def bandwidth_matrix(self, value):
         if len(value)!=2:
-            raise TypeError('Bandwidth matrix must contain two entries (h0, h1)')
+            raise TypeError('Bandwidth matrix must be a list with two float entries: [h0, h1]')
         self._bandwidth_matrix = value
+    """
+    Sorting sets and distributions
+    """
+    def _sort(self, array):
+        for i in range(len(array)):
+            idx = i
+            for j in range(i+1, len(array)):
+                if array[idx] > array[j]:
+                    idx = j
+            array[i], array[idx] = array[idx], array[i]
+        return array
     """
     kernels and metric functions
     """
@@ -95,7 +107,7 @@ class RandomSets(object):
         density function of V,W
         (array) float    
         """
-        array1=self._kernel_u(self._d_vec(V,self.__horz)/self.bandwidth_matrix[0]) #pass the fixed V,W to the whole array of ordered sets
+        array1=self._kernel_u(self._d_vec(V,self.__horz)/self.bandwidth_matrix[0])                       #pass the fixed V,W to the whole array of ordered sets
         array2=self._kernel_u(self._d_vec(self.__vert,W)/self.bandwidth_matrix[1])
         return np.dot(array1,array2)/(len(self.array)*self.bandwidth_matrix[0]*self.bandwidth_matrix[1]) # compute the sum using dot product
     def marginal_est(self, W):
@@ -108,8 +120,8 @@ class RandomSets(object):
         Return:
         marginal distribution of W
         """
-        arr=self.density_est(self.__vert,W)            #compute the array of the density estimations passing the whole array of sets to density_est
-        return np.sum(arr)       # sum entry by entry
+        arr=self.density_est(self.__vert,W) #compute the array of the density estimations passing the whole array of sets to density_est
+        return np.sum(arr)                  # sum entry by entry
     def conditional_prob(self, X,Y):
         """
         conditional probability
@@ -154,4 +166,14 @@ class RandomSets(object):
 
         returns: plot of density distribution
         """
-        plt.imshow(self.density_est(self.__vert,self.__horz), cmap='jet', interpolation='nearest')
+        plt.imshow(self.density_est(self.__vert,self.__horz), cmap='viridis', interpolation='nearest')
+        plt.colorbar(shrink=0.8)
+        plt.title("Density Distribution")
+
+    def plot_distance(self, W: set):
+        """
+        plot the distance between W and the whole distribution of sets
+        """
+        distance=self._d_vec(self.__vert, W)
+        plt.plot(distance)
+        plt.title("Distance betweenn a sample set and each entry of the dataset")
